@@ -21,6 +21,13 @@ Describe 'Invoke-PCOptimization' {
             { Invoke-PCOptimization -SilentFactor 1.5 -BackupPath $script:tempDir } | Should -Throw
         }
 
+        It 'Throws ArgumentException when mutually exclusive parameters are provided' {
+            { Invoke-PCOptimization -MaxPerf -MaxSilence -BackupPath $script:tempDir } | Should -Throw -ExceptionType ([System.ArgumentException])
+            { Invoke-PCOptimization -MaxPerf -BalancedSilence -BackupPath $script:tempDir } | Should -Throw -ExceptionType ([System.ArgumentException])
+            { Invoke-PCOptimization -MaxSilence -BalancedSilence -BackupPath $script:tempDir } | Should -Throw -ExceptionType ([System.ArgumentException])
+            { Invoke-PCOptimization -MaxPerf -MaxSilence -BalancedSilence -BackupPath $script:tempDir } | Should -Throw -ExceptionType ([System.ArgumentException])
+        }
+
         It 'Throws SecurityException when running without elevation' {
             Mock Test-PCOPlatform { return [PSCustomObject]@{ IsSupported = $true } }
             Mock Test-PCOAdmin { return $false }

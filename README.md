@@ -74,7 +74,9 @@ The primary orchestration cmdlet. Supports two mutually exclusive parameter sets
 | --------- | ------------- | ---- | ------- | ----------- |
 | `-Revert` | `Revert` | `Switch` | `False` | Restores all settings to their recorded pre-optimization state. |
 | `-SilentFactor` | `Optimize` | `Double` | `0.92` | Fraction applied to GPU maximum power limit (valid range: `0.01` to `1.0`). |
-| `-MaxPerf` | `Optimize` | `Switch` | `False` | Sets GPU power limit to hardware maximum ceiling instead of silent target. |
+| `-MaxPerf` | `Optimize` | `Switch` | `False` | Sets GPU power limit to hardware maximum ceiling instead of silent target. Mutually exclusive with `-MaxSilence` and `-BalancedSilence`. |
+| `-MaxSilence` | `Optimize` | `Switch` | `False` | Sets GPU power limit to 70% of maximum limit to maximize silence at the expense of performance. Mutually exclusive with `-MaxPerf` and `-BalancedSilence`. |
+| `-BalancedSilence` | `Optimize` | `Switch` | `False` | Sets GPU power limit to 85% of maximum limit for an optimal balance between silence and performance. Mutually exclusive with `-MaxPerf` and `-MaxSilence`. |
 | `-ForceP0` | `Optimize` | `Switch` | `False` | Opt-in switch forcing P0 performance state on NVIDIA GPUs. Emits thermal warning. |
 | `-AggressiveSilence` | `Optimize` | `Switch` | `False` | Sets CPU core parking minimum unparked threshold to 5% (default: 10%). |
 | `-SkipGpu` | `Optimize` | `Switch` | `False` | Skips all GPU optimizations (HAGS, MSI, power limit, P0). |
@@ -107,7 +109,19 @@ Clamps GPU power limit to hardware maximum limit and unparks cores:
 Invoke-PCOptimization -MaxPerf
 ```
 
-### 4. Explicit Opt-In Force-P0 Mode
+### 4. Maximum Silence Mode
+Clamps GPU power limit to 70% of the hardware maximum limit to maximize silence:
+```powershell
+Invoke-PCOptimization -MaxSilence
+```
+
+### 5. Balanced Silence Mode
+Clamps GPU power limit to 85% of the hardware maximum limit for an optimal balance:
+```powershell
+Invoke-PCOptimization -BalancedSilence
+```
+
+### 6. Explicit Opt-In Force-P0 Mode
 Forces P0 state for compute/memory overclocking with the mandatory thermal warning:
 ```powershell
 Invoke-PCOptimization -ForceP0
@@ -115,7 +129,7 @@ Invoke-PCOptimization -ForceP0
 > [!WARNING]
 > Running with `-ForceP0` keeps NVIDIA memory clocks pinned at full speed at desktop idle, increasing power draw by ~15-30W. Re-running `Invoke-PCOptimization` without `-ForceP0` automatically cleans up this tweak.
 
-### 5. Revert System Settings
+### 7. Revert System Settings
 Rolls back all registry entries, power plans, and GPU limits to pre-optimization values:
 ```powershell
 Invoke-PCOptimization -Revert

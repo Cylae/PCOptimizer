@@ -34,6 +34,12 @@ function Optimize-Gpu {
         [switch]$MaxPerf,
 
         [Parameter(Mandatory = $false)]
+        [switch]$MaxSilence,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$BalancedSilence,
+
+        [Parameter(Mandatory = $false)]
         [ValidateRange(0.01, 1.0)]
         [double]$SilentFactor = 0.92,
 
@@ -52,6 +58,15 @@ function Optimize-Gpu {
 
     if (-not $PSCmdlet.ShouldProcess("Graphics Subsystem", "Execute GPU optimization workflow")) {
         return $State
+    }
+
+    $exclusiveCount = 0
+    if ($MaxPerf) { $exclusiveCount++ }
+    if ($MaxSilence) { $exclusiveCount++ }
+    if ($BalancedSilence) { $exclusiveCount++ }
+
+    if ($exclusiveCount -gt 1) {
+        throw [System.ArgumentException]::new("The parameters -MaxPerf, -MaxSilence, and -BalancedSilence are mutually exclusive. Please specify only one.")
     }
 
     # 1. Clean up any residual P0 tweaks from prior runs
@@ -73,7 +88,11 @@ function Optimize-Gpu {
         Write-PCOLog -Message (Get-PCOString -Key 'GpuDetected' -Arguments @($gpu.Name, $gpu.Driver)) -Level 'INFO' -LogFile $LogFile -Quiet:$Quiet
         Write-PCOLog -Message (Get-PCOString -Key 'GpuMetrics' -Arguments @($gpu.PowerLimit, $gpu.DefaultLimit, $gpu.MaxLimit, $gpu.Temperature, $gpu.GraphicsClock)) -Level 'INFO' -LogFile $LogFile -Quiet:$Quiet
 
-        $targetWatts = if ($MaxPerf) {
+        $targetWatts = if ($MaxSilence) {
+            [math]::Round($gpu.MaxLimit * 0.70)
+        } elseif ($BalancedSilence) {
+            [math]::Round($gpu.MaxLimit * 0.85)
+        } elseif ($MaxPerf) {
             [math]::Round($gpu.MaxLimit)
         } else {
             [math]::Round($gpu.MaxLimit * $SilentFactor)

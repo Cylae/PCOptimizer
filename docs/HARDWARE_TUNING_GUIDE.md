@@ -17,9 +17,11 @@ This guide provides technical explanations of the optimizations applied by `PCOp
 - **Value:** `1` (Enabled)
 - **Mechanism:** Converts the GPU from legacy line-based Pin-IRQs to PCI Express Message Signaled Interrupts (MSI). MSI uses in-band memory writes over PCIe rather than dedicated interrupt lines, preventing IRQ conflicts with storage controllers or USB hubs and cutting interrupt latency from microseconds to nanoseconds.
 
-### GPU Power Limit & Acoustic Silence Target (`-SilentFactor`)
-- **Default Value:** `0.92` (92% of maximum VBIOS power limit)
-- **Mechanism:** NVIDIA Ampere GPUs exhibit steep voltage-frequency scaling curves near their TDP ceiling. Running an RTX 3070 at 100% TDP (~220W-240W) forces the cooling fans to operate at high RPMs to dissipate the last 20-30 watts, for an FPS gain of often less than 1.5%. By capping the power limit to 92% (~202W), fan noise drops noticeably while frame rate remains virtually indistinguishable from stock.
+### GPU Power Limit & Acoustic Silence Target
+- **`-SilentFactor` (Default: `0.92`):** Capping the power limit to 92% (~202W) of the maximum VBIOS limit drops fan noise noticeably while frame rate remains virtually indistinguishable from stock.
+- **`-MaxSilence`:** Sets the power limit to 70% of the maximum VBIOS limit, prioritizing acoustic silence at the expense of performance. Ideal for quiet environments.
+- **`-BalancedSilence`:** Sets the power limit to 85% of the maximum VBIOS limit, offering an optimal balance between low fan noise and high frame rates.
+- **Mechanism:** NVIDIA Ampere GPUs exhibit steep voltage-frequency scaling curves near their TDP ceiling. Running an RTX 3070 at 100% TDP (~220W-240W) forces the cooling fans to operate at high RPMs to dissipate the last 20-30 watts, for an FPS gain of often less than 1.5%. Lowering the power limit reduces heat and fan speed.
 - **Rollback Safety:** If `nvidia-smi` fails to verify that the power limit persisted, the module automatically reverts to factory default limits.
 
 ### Forced P0 State (`-ForceP0`)
