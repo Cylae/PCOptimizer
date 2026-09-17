@@ -150,7 +150,12 @@ function Get-PCOSystemHardware {
     $cimGpus = @()
     try {
         $cimGpus = @(Get-CimInstance -ClassName Win32_VideoController -ErrorAction Stop |
-            Where-Object { $_.Name -and $_.Name -notmatch 'Virtual|Remote|Basic Display|RDP' })
+            Where-Object {
+                $_.Name -and
+                $_.Name -notmatch 'Virtual|Remote|Basic Display|RDP|Hyper-V|VMware|QEMU|VBox|Citrix|Parallels|Microsoft|Standard VGA' -and
+                ($_.Name -match 'NVIDIA|GeForce|RTX|GTX|Quadro|AMD|Radeon|Intel.*Arc|Arc.*Graphics' -or
+                 ($_.AdapterCompatibility -match 'NVIDIA|AMD|Intel|Advanced Micro Devices' -and $_.AdapterCompatibility -notmatch 'Microsoft'))
+            })
     } catch {
         $null = $_
     }
@@ -160,8 +165,10 @@ function Get-PCOSystemHardware {
         foreach ($smiGpu in $nvidiaSmiGpus) {
             $arch = 'NVIDIA Generic'
             $uvGuide = @{
+                MinVoltageMv    = 900
                 TargetVoltageMv = 925
-                TargetClockMhz   = 1920
+                MinClockMhz     = 1900
+                TargetClockMhz  = 1920
                 MemoryOffsetMhz = 0
                 Notes           = 'Standard voltage-frequency curve target.'
             }
@@ -169,14 +176,18 @@ function Get-PCOSystemHardware {
             # Architectural classification & dynamic V/F calibration
             if ($smiGpu.Name -match 'RTX 50\d{2}|Blackwell') {
                 $arch = 'NVIDIA Blackwell (RTX 50-Series)'
+                $uvGuide.MinVoltageMv    = 925
                 $uvGuide.TargetVoltageMv = 950
-                $uvGuide.TargetClockMhz   = 2850
+                $uvGuide.MinClockMhz     = 2800
+                $uvGuide.TargetClockMhz  = 2850
                 $uvGuide.MemoryOffsetMhz = 1000
                 $uvGuide.Notes           = 'Blackwell architecture targets high efficiency at 925-975 mV with ultra-fast GDDR7.'
             } elseif ($smiGpu.Name -match 'RTX 40\d{2}|Ada Lovelace') {
                 $arch = 'NVIDIA Ada Lovelace (RTX 40-Series)'
+                $uvGuide.MinVoltageMv    = 950
                 $uvGuide.TargetVoltageMv = 975
-                $uvGuide.TargetClockMhz   = 2750
+                $uvGuide.MinClockMhz     = 2700
+                $uvGuide.TargetClockMhz  = 2750
                 $uvGuide.MemoryOffsetMhz = 1000
                 $uvGuide.Notes           = 'Ada Lovelace TSMC 4N node achieves maximum efficiency at 950-1000 mV @ 2700-2800 MHz.'
             } elseif ($smiGpu.Name -match 'RTX 30\d{2}|Ampere') {
@@ -189,14 +200,18 @@ function Get-PCOSystemHardware {
                 $uvGuide.Notes           = 'Ampere Samsung 8N node achieves dramatic acoustic silence at 900-925 mV @ 1900-1950 MHz.'
             } elseif ($smiGpu.Name -match 'RTX 20\d{2}|GTX 16\d{2}|Turing') {
                 $arch = 'NVIDIA Turing (RTX 20 / GTX 16-Series)'
+                $uvGuide.MinVoltageMv    = 900
                 $uvGuide.TargetVoltageMv = 925
-                $uvGuide.TargetClockMhz   = 1900
+                $uvGuide.MinClockMhz     = 1850
+                $uvGuide.TargetClockMhz  = 1900
                 $uvGuide.MemoryOffsetMhz = 400
                 $uvGuide.Notes           = 'Turing 12nm node performs best at 900-950 mV @ 1850-1950 MHz.'
             } elseif ($smiGpu.Name -match 'GTX 10\d{2}|Pascal') {
                 $arch = 'NVIDIA Pascal (GTX 10-Series)'
+                $uvGuide.MinVoltageMv    = 950
                 $uvGuide.TargetVoltageMv = 975
-                $uvGuide.TargetClockMhz   = 1950
+                $uvGuide.MinClockMhz     = 1900
+                $uvGuide.TargetClockMhz  = 1950
                 $uvGuide.MemoryOffsetMhz = 300
                 $uvGuide.Notes           = 'Pascal 16nm node performs best at 950-1000 mV @ 1900-2000 MHz.'
             }
@@ -227,8 +242,10 @@ function Get-PCOSystemHardware {
             $estDefaultWatts = 200.0
             $estMaxWatts = 220.0
             $uvGuide = @{
-                TargetVoltageMv = 1000
-                TargetClockMhz   = 2000
+                MinVoltageMv    = 900
+                TargetVoltageMv = 925
+                MinClockMhz     = 1900
+                TargetClockMhz  = 1950
                 MemoryOffsetMhz = 0
                 Notes           = 'Generic GPU tuning parameters.'
             }
@@ -236,23 +253,27 @@ function Get-PCOSystemHardware {
             if ($name -match 'NVIDIA') {
                 $vendor = 'NVIDIA'
                 $arch = 'NVIDIA Display Adapter'
-                if ($name -match 'RTX 4090') { $estDefaultWatts = 450.0; $estMaxWatts = 500.0 }
-                elseif ($name -match 'RTX 4080') { $estDefaultWatts = 320.0; $estMaxWatts = 350.0 }
-                elseif ($name -match 'RTX 4070') { $estDefaultWatts = 200.0; $estMaxWatts = 220.0 }
-                elseif ($name -match 'RTX 3090') { $estDefaultWatts = 350.0; $estMaxWatts = 370.0 }
-                elseif ($name -match 'RTX 3080') { $estDefaultWatts = 320.0; $estMaxWatts = 350.0 }
-                elseif ($name -match 'RTX 3070') { $estDefaultWatts = 220.0; $estMaxWatts = 240.0 }
-                elseif ($name -match 'RTX 3060') { $estDefaultWatts = 170.0; $estMaxWatts = 180.0 }
+                if ($name -match 'RTX 4090') { $estDefaultWatts = 450.0; $estMaxWatts = 500.0; $uvGuide.MinVoltageMv = 950; $uvGuide.TargetVoltageMv = 975; $uvGuide.MinClockMhz = 2700; $uvGuide.TargetClockMhz = 2750 }
+                elseif ($name -match 'RTX 4080') { $estDefaultWatts = 320.0; $estMaxWatts = 350.0; $uvGuide.MinVoltageMv = 950; $uvGuide.TargetVoltageMv = 975; $uvGuide.MinClockMhz = 2650; $uvGuide.TargetClockMhz = 2700 }
+                elseif ($name -match 'RTX 4070') { $estDefaultWatts = 200.0; $estMaxWatts = 220.0; $uvGuide.MinVoltageMv = 925; $uvGuide.TargetVoltageMv = 950; $uvGuide.MinClockMhz = 2500; $uvGuide.TargetClockMhz = 2550 }
+                elseif ($name -match 'RTX 3090') { $estDefaultWatts = 350.0; $estMaxWatts = 370.0; $uvGuide.MinVoltageMv = 875; $uvGuide.TargetVoltageMv = 900; $uvGuide.MinClockMhz = 1850; $uvGuide.TargetClockMhz = 1900 }
+                elseif ($name -match 'RTX 3080') { $estDefaultWatts = 320.0; $estMaxWatts = 350.0; $uvGuide.MinVoltageMv = 875; $uvGuide.TargetVoltageMv = 900; $uvGuide.MinClockMhz = 1875; $uvGuide.TargetClockMhz = 1920 }
+                elseif ($name -match 'RTX 3070') { $estDefaultWatts = 220.0; $estMaxWatts = 240.0; $uvGuide.MinVoltageMv = 900; $uvGuide.TargetVoltageMv = 925; $uvGuide.MinClockMhz = 1900; $uvGuide.TargetClockMhz = 1950 }
+                elseif ($name -match 'RTX 3060') { $estDefaultWatts = 170.0; $estMaxWatts = 180.0; $uvGuide.MinVoltageMv = 900; $uvGuide.TargetVoltageMv = 925; $uvGuide.MinClockMhz = 1875; $uvGuide.TargetClockMhz = 1925 }
             } elseif ($name -match 'AMD|Radeon') {
                 $vendor = 'AMD'
                 if ($name -match 'RX 7\d{3}') {
                     $arch = 'AMD RDNA 3 (Radeon RX 7000-Series)'
+                    $uvGuide.MinVoltageMv = 1000
                     $uvGuide.TargetVoltageMv = 1050
+                    $uvGuide.MinClockMhz = 2450
                     $uvGuide.TargetClockMhz = 2500
                     $uvGuide.Notes = 'Use AMD Software Adrenalin: Voltage offset -40 mV to -70 mV, Power Limit -10% for silence.'
                 } elseif ($name -match 'RX 6\d{3}') {
                     $arch = 'AMD RDNA 2 (Radeon RX 6000-Series)'
+                    $uvGuide.MinVoltageMv = 1025
                     $uvGuide.TargetVoltageMv = 1075
+                    $uvGuide.MinClockMhz = 2250
                     $uvGuide.TargetClockMhz = 2300
                     $uvGuide.Notes = 'Use AMD Software Adrenalin: Voltage offset -50 mV, VRAM Fast Timings enabled.'
                 } else {

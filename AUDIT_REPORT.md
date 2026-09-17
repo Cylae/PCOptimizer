@@ -208,11 +208,24 @@ No XML parsing or generation is utilized in the repository.
 
 ---
 
+### Finding PCO-006 (CONFIRMED DEFECT / TEST HYGIENE - FIXED)
+- **Severity:** MEDIUM
+- **Category:** CI/CD & Unit Test Isolation
+- **Location:** `Tests\Unit\Export-MSIAfterburnerProfile.Tests.ps1`, `Private\Get-PCOSystemHardware.ps1`
+- **Problem:** In CI execution (`actions/runs/35215414599`), `Export-MSIAfterburnerProfile.Tests.ps1` failed with `[-] Generates Afterburner tuning guidance with recommended targets`. Root cause: `Export-MSIAfterburnerProfile.Tests.ps1` did not hermetically mock `Get-PCOSystemHardware`. On GitHub Actions Azure VMs (`runneradmin`), `Get-CimInstance Win32_VideoController` detected `Microsoft Hyper-V Video` (virtual display adapter). `Get-PCOSystemHardware` did not filter out Hyper-V virtual adapters, producing generic 975–1000 mV and 1975–2025 MHz targets instead of baseline 900–925 mV and 1900–1950 MHz targets.
+- **Remediation:**
+  1. Updated `Get-PCOSystemHardware.ps1` to filter out virtual, hypervisor, and remote display adapters (`Hyper-V`, `VMware`, `QEMU`, `VBox`, `Citrix`, `Parallels`, `Microsoft`, etc.) and harmonized generic fallback targets to 900–925 mV / 1900–1950 MHz.
+  2. Hermetically mocked `Get-PCOSystemHardware` in `Export-MSIAfterburnerProfile.Tests.ps1`'s `BeforeEach` block.
+  3. Added explicit unit test cases for host with zero GPUs detected, AMD Radeon GPU guidance (AMD Software Adrenalin), and Intel Arc GPU guidance (Intel Arc Control).
+- **Validation:** `Export-MSIAfterburnerProfile.Tests.ps1` ran cleanly with all 5 tests passing in 1.54s; full test suite passed with 72 tests across 20 files.
+
+---
+
 ## 8. Validation Matrix
 
 | Validation Test Battery | Result | Executed Command & Evidence |
 |:---|:---:|:---|
-| **Core Unit Tests** | **PASS** | `pwsh -NoProfile -File .\Tests\Run-Tests.ps1 -Detailed`<br>20 files, 69 tests executed, 69 passed, 0 failed, 0 skipped. |
+| **Core Unit Tests** | **PASS** | `pwsh -NoProfile -File .\Tests\Run-Tests.ps1 -Detailed`<br>20 files, 72 tests executed, 72 passed, 0 failed, 0 skipped. |
 | **PSScriptAnalyzer Static Analysis** | **PASS** | `pwsh -NoProfile -Command "Invoke-ScriptAnalyzer -Path . -Settings .\PSScriptAnalyzerSettings.psd1 -Recurse"`<br>Exited with code 0. 0 errors, 0 warnings. |
 | **Module Manifest Validation** | **PASS** | `pwsh -NoProfile -Command "Test-ModuleManifest -Path .\PCOptimizer.psd1"`<br>Manifest valid, all exported cmdlets and aliases verified. |
 | **Strict-Mode Module Import** | **PASS** | `Set-StrictMode -Version Latest; Import-Module .\PCOptimizer.psd1 -Force`<br>Clean import without missing dependencies or strict-mode violations. |
@@ -220,6 +233,7 @@ No XML parsing or generation is utilized in the repository.
 | **GameDVR Conflict Regression** | **PASS** | `GameDvrConflict.Tests.ps1`<br>Verified `AppCaptureEnabled` is never re-enabled during CPU tuning. |
 | **Security & CSV Injection Battery**| **PASS** | `SecurityRegression.Tests.ps1`<br>5 tests covering formula prefix neutralization, quoted CSV, and unsupported telemetry passed. |
 | **Guided CLI & Slider Battery** | **PASS** | `GuidedCLI.Tests.ps1`<br>8 tests covering Level 1-5 mapping, continuous SilenceBias, help display, and revert dispatch passed. |
+| **MSI Afterburner Profile Battery** | **PASS** | `Export-MSIAfterburnerProfile.Tests.ps1`<br>5 tests covering Ampere targets, no-GPU baseline fallback, AMD Adrenalin, Intel Arc Control, and WhatIf passed. |
 | **Standalone CLI Help Execution** | **PASS** | `pwsh -NoProfile -File .\PCOptimizer-CLI.ps1 -Help`<br>Exited with code 0, complete guide rendered. |
 | **Standalone CLI Dry-Run Execution**| **PASS** | `pwsh -NoProfile -File .\PCOptimizer-CLI.ps1 -DryRun -Level 2 -NonInteractive`<br>Exited with code 0, full simulation ran with detected hardware telemetry. |
 
