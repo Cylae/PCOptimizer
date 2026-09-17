@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    name: Package and Release Module
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate Module Manifest
+        shell: pwsh
+        run: |
+          Test-ModuleManifest -Path ./PCOptimizer.psd1
+
+      - name: Package Module Artifact
+        shell: pwsh
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          $zipName = "PCOptimizer-$tag.zip"
+          $files = @(
+              'PCOptimizer.psd1',
+              'PCOptimizer.psm1',
+              'Public',
+              'Private',
+              'docs',
+              'examples',
+              'LICENSE',
+              'README.md',
+              'CHANGELOG.md'
+          )
+          Compress-Archive -Path $files -DestinationPath $zipName -CompressionLevel Optimal
+          Write-Host "Created release archive: $zipName"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: PCOptimizer-*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

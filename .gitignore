@@ -1,0 +1,24 @@
+# PowerShell / OS Artifacts
+*.log
+log_*.txt
+state.json
+MSIAfterburner_Profile.txt
+
+# Pester & Test Results
+TestResults/
+TestResults.xml
+coverage.xml
+
+# Editor & OS files
+.vscode/
+.idea/
+Thumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Package outputs
+*.nupkg
+*.zip
+out/
+bin/
+obj/
