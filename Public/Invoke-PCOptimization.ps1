@@ -53,6 +53,12 @@ function Invoke-PCOptimization {
         [switch]$MaxPerf,
 
         [Parameter(Mandatory = $false, ParameterSetName = 'Optimize')]
+        [switch]$MaxSilence,
+
+        [Parameter(Mandatory = $false, ParameterSetName = 'Optimize')]
+        [switch]$BalancedSilence,
+
+        [Parameter(Mandatory = $false, ParameterSetName = 'Optimize')]
         [switch]$ForceP0,
 
         [Parameter(Mandatory = $false, ParameterSetName = 'Optimize')]
@@ -86,6 +92,16 @@ function Invoke-PCOptimization {
 
     if ($DryRun) {
         $WhatIfPreference = $true
+    }
+
+    # Validate mutually exclusive switches
+    $exclusiveCount = 0
+    if ($MaxPerf) { $exclusiveCount++ }
+    if ($MaxSilence) { $exclusiveCount++ }
+    if ($BalancedSilence) { $exclusiveCount++ }
+
+    if ($exclusiveCount -gt 1) {
+        throw [System.ArgumentException]::new("The parameters -MaxPerf, -MaxSilence, and -BalancedSilence are mutually exclusive. Please specify only one.")
     }
 
     # Verify platform compatibility
@@ -143,6 +159,8 @@ function Invoke-PCOptimization {
         Write-PCOLog -Message '========== OPTIMIZING GPU (HAGS, MSI, POWER LIMIT) ==========' -Level 'STEP' -LogFile $logFile -Quiet:$Quiet
         $state = Optimize-Gpu -State $state `
             -MaxPerf:$MaxPerf `
+            -MaxSilence:$MaxSilence `
+            -BalancedSilence:$BalancedSilence `
             -SilentFactor $SilentFactor `
             -ForceP0:$ForceP0 `
             -VerificationDelaySeconds $VerificationDelaySeconds `
