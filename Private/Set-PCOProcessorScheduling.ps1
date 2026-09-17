@@ -65,7 +65,6 @@ function Set-PCOProcessorScheduling {
         # Windows Game Mode
         try {
             $null = Set-PCORegistryDword -Path 'HKCU:\Software\Microsoft\GameBar' -Name 'AutoGameModeEnabled' -Value 1
-            $null = Set-PCORegistryDword -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR' -Name 'AppCaptureEnabled' -Value 1
             $null = Set-PCORegistryDword -Path 'HKCU:\Software\Microsoft\GameBar' -Name 'AllowAutoGameMode' -Value 1
             $gameModeSuccess = $true
             Write-PCOLog -Message (Get-PCOString -Key 'GameModeEnabled') -Level 'OK' -LogFile $LogFile -Quiet:$Quiet

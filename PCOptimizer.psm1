@@ -21,8 +21,10 @@ Export-ModuleMember -Function @(
     'Export-MSIAfterburnerProfile',
     'Optimize-Gpu',
     'Optimize-Cpu',
-    'Optimize-GamingFeature'
+    'Optimize-GamingFeature',
+    'Start-PCOptimizerWizard'
 ) -Alias @(
     'Optimize-PC',
-    'Optimize-GamingFeatures'
+    'Optimize-GamingFeatures',
+    'Invoke-PCOptimizerCLI'
 )

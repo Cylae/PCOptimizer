@@ -33,7 +33,7 @@ function Get-NvidiaGpuStatus {
             return $null
         }
 
-        $gpus = ConvertFrom-PCONvidiaSmiOutput -RawOutput $smiResult.Output
+        $gpus = ConvertFrom-PCONvidiaSmiOutput -RawOutput $smiResult.Output -AllowUnsupported
         foreach ($gpu in $gpus) {
             $gpu | Add-Member -NotePropertyName 'SmiPath' -NotePropertyValue $resolvedSmi -Force
         }

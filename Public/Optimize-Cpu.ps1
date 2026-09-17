@@ -18,6 +18,7 @@
 #>
 function Optimize-Cpu {
     [CmdletBinding(SupportsShouldProcess)]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Justification = 'Delegates ShouldProcess to child cmdlets')]
     [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory = $true, Position = 0)]
@@ -33,9 +34,6 @@ function Optimize-Cpu {
         [switch]$Quiet
     )
 
-    if (-not $PSCmdlet.ShouldProcess("Processor Subsystem", "Execute CPU and Power Scheme optimization workflow")) {
-        return $State
-    }
 
     # 1. High Performance Power Plan configuration
     $ppResult = Set-PCOPowerPlan -LogFile $LogFile -Quiet:$Quiet

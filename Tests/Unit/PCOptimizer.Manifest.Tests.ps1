@@ -21,7 +21,8 @@ Describe 'Module Manifest & Import Verification' {
             'Export-MSIAfterburnerProfile',
             'Optimize-Gpu',
             'Optimize-Cpu',
-            'Optimize-GamingFeature'
+            'Optimize-GamingFeature',
+            'Start-PCOptimizerWizard'
         )
 
         foreach ($fn in $expectedFunctions) {
@@ -29,9 +30,10 @@ Describe 'Module Manifest & Import Verification' {
         }
     }
 
-    It 'Exports the Optimize-PC alias' {
+    It 'Exports the Optimize-PC and Invoke-PCOptimizerCLI aliases' {
         $manifest = Test-ModuleManifest -Path $script:manifestFullPath.Path
         $manifest.ExportedAliases.Keys | Should -Contain 'Optimize-PC'
+        $manifest.ExportedAliases.Keys | Should -Contain 'Invoke-PCOptimizerCLI'
     }
 
     It 'Imports cleanly in Strict Mode with ErrorAction Stop' {

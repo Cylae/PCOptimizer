@@ -29,7 +29,9 @@ function Invoke-PCOPowerCfg {
     try {
         $pinfo = [System.Diagnostics.ProcessStartInfo]::new()
         $pinfo.FileName = 'powercfg.exe'
-        $pinfo.Arguments = $argString
+        foreach ($arg in $Arguments) {
+            $pinfo.ArgumentList.Add($arg)
+        }
         $pinfo.RedirectStandardOutput = $true
         $pinfo.RedirectStandardError = $true
         $pinfo.UseShellExecute = $false
@@ -38,7 +40,16 @@ function Invoke-PCOPowerCfg {
         $process = [System.Diagnostics.Process]::Start($pinfo)
         $stdout = $process.StandardOutput.ReadToEnd()
         $stderr = $process.StandardError.ReadToEnd()
-        $process.WaitForExit()
+        $exited = $process.WaitForExit(30000)
+        if (-not $exited) {
+            try { $process.Kill($true) } catch { $null = $_ }
+            return [PSCustomObject]@{
+                ExitCode  = -2
+                Output    = 'powercfg.exe execution timed out after 30 seconds.'
+                Arguments = $argString
+                Success   = $false
+            }
+        }
 
         $combinedOutput = ($stdout + "`n" + $stderr).Trim()
         $exitCode = $process.ExitCode

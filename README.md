@@ -19,13 +19,15 @@
 
 ## Key Features
 
+- **Universal Hardware Intelligence Engine:** Auto-identifies any CPU (AMD Zen 1–5, X3D, multi-CCD; Intel 6th–14th Gen, Core Ultra Arrow Lake) and GPU architecture (NVIDIA GeForce/RTX/Blackwell, AMD Radeon RDNA 1–4, Intel Arc) across the entire consumer market with offline reference data and dynamic spec resolution.
+- **Guided Interactive CLI Wizard (`PCOptimizer-CLI.ps1`):** Features an interactive Silence vs. Performance visual gauge slider, guided `-Help` manual, preset selector (`-Level 1..5`), and continuous bias tuning (`-SilenceBias 0..100`).
 - **Hardware-Accelerated GPU Scheduling (HAGS):** Transfers frame scheduling directly to the GPU's onboard scheduling processor, reducing CPU interrupt overhead and improving 1% low frame times in modern DirectX 12/Vulkan titles.
-- **Message Signaled Interrupts (MSI Mode):** Converts legacy line-based Pin-IRQs to PCI Express Message Signaled Interrupts, eliminating IRQ sharing conflicts and slashing interrupt dispatch latency.
-- **Gaming Subsystem Optimization:** Disables Xbox Game Bar and background Game DVR telemetry hooks to eliminate frame pacing micro-stutters.
+- **Message Signaled Interrupts (MSI Mode):** Converts legacy line-based Pin-IRQs to PCI Express Message Signaled Interrupts across all discrete display adapters (NVIDIA, AMD, Intel), eliminating IRQ sharing conflicts and slashing interrupt dispatch latency.
+- **Gaming Subsystem Optimization:** Disables Xbox Game Bar and background Game DVR telemetry hooks to eliminate frame pacing micro-stutters without re-enabling GameDVR capture keys.
 - **Adaptive GPU Power Target Clamping:** Automatically calculates and sets acoustic silence targets (defaulting to 92% TDP), achieving dramatic fan noise reduction with under 1.5% FPS variance. Includes **automated verification and rollback** to factory defaults if the GPU driver rejects the setting.
 - **Ryzen Core Parking & Boost Calibration:** Configures Windows High Performance power scheme, tunes processor throttling bounds (5% min / 100% max), parks idle CCD cores at desktop idle, and configures Processor Performance Boost Mode to *Efficient Aggressive*.
 - **Opt-In Dynamic P-State Control:** Provides explicit, warned control over `DisableDynamicPstate` (forced P0) with automatic cleanup of stale tweaks from prior runs.
-- **MSI Afterburner Advisory Guide:** Exports tailored voltage-frequency curve recommendations (900-925 mV @ 1900-1950 MHz) for comprehensive post-reboot undervolting.
+- **Universal Tuning & MSI Afterburner Advisory Guide:** Exports tailored voltage-frequency curve recommendations (e.g. 900-925 mV @ 1900-1950 MHz) dynamically adapted to the detected GPU architecture (NVIDIA, AMD Radeon, Intel Arc).
 - **Safety Rails & 100% Reversibility:** Schema-versioned JSON state persistence (`state.json`) captures prior values before every mutation, enabling full rollback. Supports `-WhatIf` / `-DryRun` preview modes.
 
 ---
@@ -66,6 +68,25 @@ Copy-Item -Path . -Destination $targetPath -Recurse -Force
 
 ## Command Reference
 
+### `Start-PCOptimizerWizard` (Alias: `Invoke-PCOptimizerCLI`, Script: `.\PCOptimizer-CLI.ps1`)
+
+The interactive, guided CLI orchestrator. Guides users through system tuning with an interactive Silence vs. Performance visual gauge slider, hardware classification probe, and built-in help.
+
+| Parameter | Type | Default | Description |
+| --------- | ---- | ------- | ----------- |
+| `-Help` / `-h` | `Switch` | `False` | Displays the comprehensive guided manual with architectural overview, hardware detection, and tuning guidelines. |
+| `-Level` | `Int` (`1..5`) | `3` (interactive) | Preset tuning profile (1 = Extreme Silence, 2 = Quiet Efficiency, 3 = Balanced, 4 = High Performance, 5 = Maximum Performance). |
+| `-SilenceBias` | `Int` (`0..100`) | Derived | Continuous silence bias percentage (0% = Maximum Performance, 100% = Extreme Silence). |
+| `-NonInteractive` | `Switch` | `False` | Executes unattended without interactive prompts using provided or default level. |
+| `-DryRun` | `Switch` | `False` | Simulates all optimization steps and prints actions without modifying the system. |
+| `-Revert` | `Switch` | `False` | Guides the user through rolling back previous optimizations using `state.json`. |
+| `-SkipGpu` | `Switch` | `False` | Bypasses GPU power clamping and MSI configuration. |
+| `-SkipCpu` | `Switch` | `False` | Bypasses CPU power scheme and core parking adjustments. |
+| `-ForceP0` | `Switch` | `False` | Opts in to forced P0 state for memory overclocking with thermal warning. |
+| `-Quiet` | `Switch` | `False` | Suppresses decorative visual banners and status gauges. |
+
+---
+
 ### `Invoke-PCOptimization` (Alias: `Optimize-PC`)
 
 The primary orchestration cmdlet. Supports two mutually exclusive parameter sets: `Optimize` and `Revert`.
@@ -90,6 +111,24 @@ The primary orchestration cmdlet. Supports two mutually exclusive parameter sets
 ---
 
 ## Usage Examples
+
+### 0. Guided Interactive CLI (Recommended for Users)
+Launch the interactive wizard with hardware detection, visual gauge slider, and confirmation prompts:
+```powershell
+.\PCOptimizer-CLI.ps1
+# or via module cmdlet
+Start-PCOptimizerWizard
+```
+
+Display the built-in guided manual with hardware telemetry:
+```powershell
+.\PCOptimizer-CLI.ps1 -Help
+```
+
+Execute a simulated dry-run targeting Quiet Efficiency (Level 2):
+```powershell
+.\PCOptimizer-CLI.ps1 -Level 2 -DryRun -NonInteractive
+```
 
 ### 1. Default Balanced Run (Performance + Acoustic Silence)
 Applies HAGS, MSI mode, disables Game DVR, tunes Ryzen core parking, and caps GPU TDP to 92%:

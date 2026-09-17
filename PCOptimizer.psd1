@@ -35,7 +35,8 @@
         'Export-MSIAfterburnerProfile',
         'Optimize-Gpu',
         'Optimize-Cpu',
-        'Optimize-GamingFeature'
+        'Optimize-GamingFeature',
+        'Start-PCOptimizerWizard'
     )
 
     # Cmdlets to export from this module
@@ -47,7 +48,8 @@
     # Aliases to export from this module
     AliasesToExport = @(
         'Optimize-PC',
-        'Optimize-GamingFeatures'
+        'Optimize-GamingFeatures',
+        'Invoke-PCOptimizerCLI'
     )
 
     # Private data to pass to the module specified in RootModule/ModuleToProcess

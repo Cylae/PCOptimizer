@@ -25,6 +25,7 @@
 #>
 function Optimize-Gpu {
     [CmdletBinding(SupportsShouldProcess)]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Justification = 'Delegates ShouldProcess to child cmdlets')]
     [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory = $true, Position = 0)]
@@ -56,9 +57,6 @@ function Optimize-Gpu {
         [switch]$Quiet
     )
 
-    if (-not $PSCmdlet.ShouldProcess("Graphics Subsystem", "Execute GPU optimization workflow")) {
-        return $State
-    }
 
     $exclusiveCount = 0
     if ($MaxPerf) { $exclusiveCount++ }

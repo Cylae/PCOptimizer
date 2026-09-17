@@ -15,6 +15,7 @@
 #>
 function Optimize-GamingFeature {
     [CmdletBinding(SupportsShouldProcess)]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Justification = 'Delegates ShouldProcess to child cmdlets')]
     [Alias('Optimize-GamingFeatures')]
     [OutputType([PSCustomObject])]
     param(
@@ -28,9 +29,6 @@ function Optimize-GamingFeature {
         [switch]$Quiet
     )
 
-    if (-not $PSCmdlet.ShouldProcess("Gaming Subsystem", "Disable Xbox Game Bar and Game DVR background capture")) {
-        return $State
-    }
 
     $gbEntries = Set-PCOGameBarState -LogFile $LogFile -Quiet:$Quiet
     $State | Add-Member -NotePropertyName 'GameBar' -NotePropertyValue $gbEntries -Force

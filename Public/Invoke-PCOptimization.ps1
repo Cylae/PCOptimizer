@@ -205,12 +205,43 @@ function Invoke-PCOptimization {
         Write-Host '+--------------------------------------------------------------+' -ForegroundColor Yellow
         Write-Host ''
         Write-Host 'Recommended Follow-Up Steps (Post-Reboot):' -ForegroundColor White
-        Write-Host '  A. MSI Afterburner Undervolt (Maximizes Silence & Clocks):' -ForegroundColor Cyan
-        Write-Host "     1. Review guidance at: $profilePath" -ForegroundColor Gray
-        Write-Host '     2. Open Curve Editor (Ctrl+F) -> Target 900-925 mV @ 1900-1950 MHz' -ForegroundColor Gray
-        Write-Host '  B. AMD Ryzen BIOS Optimization (PBO & Curve Optimizer):' -ForegroundColor Cyan
-        Write-Host '     1. Enable Precision Boost Overdrive (PBO)' -ForegroundColor Gray
-        Write-Host '     2. Set Curve Optimizer -> Negative (All Cores -10 to -30 based on silicon)' -ForegroundColor Gray
+
+        $detectedHw = $null
+        try { $detectedHw = Get-PCOSystemHardware } catch { $null = $_ }
+
+        # GPU Guidance
+        $gpuVendor = if ($detectedHw -and $detectedHw.GPUs -and $detectedHw.GPUs.Count -gt 0) { $detectedHw.GPUs[0].Vendor } else { 'NVIDIA' }
+        if ($gpuVendor -eq 'AMD') {
+            Write-Host '  A. AMD Radeon Adrenalin Tuning (Maximizes Silence & Clocks):' -ForegroundColor Cyan
+            Write-Host "     1. Review detailed guide at: $profilePath" -ForegroundColor Gray
+            Write-Host '     2. Performance -> Tuning -> Voltage Offset -30 to -60 mV, Power Limit -5% to -10%' -ForegroundColor Gray
+        } elseif ($gpuVendor -eq 'Intel') {
+            Write-Host '  A. Intel Arc Control Tuning (Maximizes Silence & Clocks):' -ForegroundColor Cyan
+            Write-Host "     1. Review detailed guide at: $profilePath" -ForegroundColor Gray
+            Write-Host '     2. Performance -> Tuning -> Voltage Offset -25 to -45 mV' -ForegroundColor Gray
+        } else {
+            Write-Host '  A. MSI Afterburner Undervolt (Maximizes Silence & Clocks):' -ForegroundColor Cyan
+            Write-Host "     1. Review detailed guide at: $profilePath" -ForegroundColor Gray
+            $targetNote = if ($detectedHw -and $detectedHw.GPUs -and $detectedHw.GPUs.Count -gt 0 -and $detectedHw.GPUs[0].RecommendedUndervolt) {
+                "$($detectedHw.GPUs[0].RecommendedUndervolt.TargetVoltageMv) mV @ $($detectedHw.GPUs[0].RecommendedUndervolt.TargetClockMhz) MHz"
+            } else {
+                '900-925 mV @ 1900-1950 MHz'
+            }
+            Write-Host "     2. Open Curve Editor (Ctrl+F) -> Target $targetNote" -ForegroundColor Gray
+        }
+
+        # CPU Guidance
+        $cpuVendor = if ($detectedHw -and $detectedHw.CPU) { $detectedHw.CPU.Vendor } else { 'AMD' }
+        if ($cpuVendor -eq 'Intel') {
+            Write-Host '  B. Intel CPU BIOS Optimization (Power Limits & Thermals):' -ForegroundColor Cyan
+            Write-Host '     1. Check Motherboard BIOS: Ensure Intel Baseline / Intel Default profile is loaded' -ForegroundColor Gray
+            Write-Host '     2. Set PL1 = PL2 according to cooler dissipation capability for low fan acoustics' -ForegroundColor Gray
+        } else {
+            Write-Host '  B. AMD Ryzen BIOS Optimization (PBO & Curve Optimizer):' -ForegroundColor Cyan
+            Write-Host '     1. Enable Precision Boost Overdrive (PBO)' -ForegroundColor Gray
+            Write-Host '     2. Set Curve Optimizer -> Negative (All Cores -15 to -30 based on silicon)' -ForegroundColor Gray
+        }
+
         Write-Host ''
         Write-Host "To revert all changes: Invoke-PCOptimization -Revert -BackupPath '$BackupPath'" -ForegroundColor DarkGray
         Write-Host "Complete run log saved to: $logFile" -ForegroundColor DarkGray
