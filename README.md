@@ -317,6 +317,17 @@ See [Tests/Integration/README.md](Tests/Integration/README.md) for the physical 
 
 ---
 
+## Architecture & Maintainability Directive Compliance
+
+PCOptimizer is governed by the **Universal Autonomous Software Engineering Agent Master Directive** (documented in [docs/MASTER_DIRECTIVE_AUDIT.md](docs/MASTER_DIRECTIVE_AUDIT.md)).
+
+### Core Maintainability Standards:
+1. **Explicit Invariants & Trust Boundaries:** Elevated Windows NT tokens are mandatory for hardware system calls. Registry states are non-destructively snapshotted to `$env:ProgramData\PCOptimizer\state.json` prior to mutation.
+2. **Deterministic Fallbacks:** Absence of `nvidia-smi` or non-NVIDIA GPUs trigger graceful CPU/Gaming feature fallback without throwing unhandled exceptions.
+3. **Traceability & Auditing:** All operational parameters, TDP targets, and registry keys are recorded in timestamped logs with deterministic rollback support via `Restore-PCOptimization`.
+
+---
+
 ## Contributing & Support
 
 We welcome issues and pull requests! Please review our [Contributing Guidelines](CONTRIBUTING.md), [Security Policy](SECURITY.md), and [Code of Conduct](CODE_OF_CONDUCT.md).
